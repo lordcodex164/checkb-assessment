@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { Transport } from '@nestjs/microservices';
 import { join } from 'path';
 import { AppModule } from './app.module';
-import { Logger } from 'nestjs-pino';
 
 const PROTO_PATH = join(__dirname, '../../../packages/proto/wallet.proto');
 
