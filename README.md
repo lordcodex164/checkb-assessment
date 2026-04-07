@@ -4,6 +4,8 @@ A production-ready, microservice-based wallet system built with **NestJS**, **gR
 
 **HTTP clients (Postman, curl, browsers, mobile apps) should call the API Gateway.** The gateway accepts REST/JSON and forwards to the **User** and **Wallet** microservices over gRPC. You can still call those services directly with gRPC tools (e.g. `grpcurl`) for debugging.
 
+**Deployed HTTP API:** [https://api-gateway-qtmf.onrender.com](https://api-gateway-qtmf.onrender.com) · **Postman documentation:** [Wallet System — Postman / API reference](https://documenter.getpostman.com/view/21411890/2sBXiri8Cf)
+
 ---
 
 ## 📐 Architecture
@@ -170,17 +172,19 @@ The HTTP API is served at **`http://localhost:3000`** (or whatever you set `PORT
 
 ## 🌐 Deployed Services
 
-This project includes deployed **gRPC** backends:
+| Service | URL | Notes |
+|--------|-----|--------|
+| **API Gateway (HTTP / REST)** | [https://api-gateway-qtmf.onrender.com](https://api-gateway-qtmf.onrender.com) | Public entry point for Postman, curl, and apps (`GET /` returns a hello string). |
+| **Postman documentation** | [https://documenter.getpostman.com/view/21411890/2sBXiri8Cf](https://documenter.getpostman.com/view/21411890/2sBXiri8Cf) | Published API reference (includes flows such as gRPC via `grpcurl` where documented). |
+| User Service (gRPC) | `https://user-service-fjbq.onrender.com` | Use port `443` with TLS in `grpcurl`. |
+| Wallet Service (gRPC) | `https://wallet-service-8v1o.onrender.com` | Port `443` with TLS. |
 
-- User Service: `https://user-service-fjbq.onrender.com` (gRPC; use port `443` with TLS in `grpcurl`)
-- Wallet Service: `https://wallet-service-8v1o.onrender.com` (gRPC; port `443`)
-
-There is **no** shared public URL for the API Gateway in this README—expose your own HTTP gateway in front of these services if you need REST on the internet. Locally, use [HTTP API (API Gateway)](#http-api-api-gateway) against `http://localhost:3000`.
+For local development, use [HTTP API (API Gateway)](#http-api-api-gateway) against `http://localhost:3000`.
 
 **Notes**
 
-- When calling deployed services with gRPC tools, use the proper TLS/port settings (see below).
-- For other services (or a self-hosted API Gateway), set `USER_SERVICE_URL` and `WALLET_SERVICE_URL` to reachable `host:port` values (internal hostnames on a private network are fine).
+- When calling deployed **gRPC** services directly, use the proper TLS/port settings (see below).
+- Internal deployments should set `USER_SERVICE_URL` and `WALLET_SERVICE_URL` to reachable `host:port` values (private hostnames on a VPC are fine).
 
 ---
 
@@ -196,9 +200,11 @@ Use this surface for **Postman**, **curl**, and any HTTP client. The gateway val
 
 | Item | Value |
 |------|--------|
-| **Default base URL** | `http://localhost:3000` |
-| **Port** | `PORT` env (default `3000`) |
-| **Upstream gRPC** | `USER_SERVICE_URL`, `WALLET_SERVICE_URL` (`host:port`, e.g. `localhost:5001`) |
+| **Local base URL** | `http://localhost:3000` |
+| **Production base URL** | [https://api-gateway-qtmf.onrender.com](https://api-gateway-qtmf.onrender.com) |
+| **Port** (local) | `PORT` env (default `3000`) |
+| **Upstream gRPC** (gateway config) | `USER_SERVICE_URL`, `WALLET_SERVICE_URL` (`host:port`, e.g. `localhost:5001`) |
+| **Postman docs** | [Postman Documenter — Wallet System](https://documenter.getpostman.com/view/21411890/2sBXiri8Cf) |
 
 ### Routes
 
@@ -220,7 +226,11 @@ Use this surface for **Postman**, **curl**, and any HTTP client. The gateway val
 ### Examples (curl)
 
 ```bash
+# Local
 BASE=http://localhost:3000
+
+# Deployed gateway
+# BASE=https://api-gateway-qtmf.onrender.com
 
 # Create user
 curl -s -X POST "$BASE/users" \
@@ -249,13 +259,15 @@ curl -s -X POST "$BASE/wallets/USER_ID/debit" \
 
 ### Postman
 
-Create a collection with **base URL** `http://localhost:3000` (or your Docker-published port). Use **Body → raw → JSON** for `POST` requests. No gRPC or TLS configuration is required on the gateway itself.
+Use the published documentation: **[Wallet System — Postman / API reference](https://documenter.getpostman.com/view/21411890/2sBXiri8Cf)**.
+
+For requests against the **deployed** gateway, set the collection or environment **base URL** to **`https://api-gateway-qtmf.onrender.com`**. For **local** runs, use `http://localhost:3000` (or your Docker-published port). Use **Body → raw → JSON** for `POST` requests. No gRPC or TLS setup is required on the gateway for HTTP calls.
 
 ---
 
 ## 🧪 API Testing (direct gRPC)
 
-The **User** and **Wallet** services expose **gRPC** on ports **5001** and **5002**. Use [`grpcurl`](https://github.com/fullstorydev/grpcurl) for CLI testing, or import `docs/wallet-system.postman_collection.json` if your collection targets gRPC directly.
+The **User** and **Wallet** services expose **gRPC** on ports **5001** and **5002**. Use [`grpcurl`](https://github.com/fullstorydev/grpcurl) for CLI testing, or follow **[Postman Documenter](https://documenter.getpostman.com/view/21411890/2sBXiri8Cf)** / import `docs/wallet-system.postman_collection.json` for gRPC-oriented examples where applicable.
 
 For typical app integration and Postman-over-HTTP, prefer the [HTTP API (API Gateway)](#http-api-api-gateway) section above.
 
