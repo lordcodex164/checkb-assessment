@@ -47,7 +47,7 @@ services:
     container_name: user-service
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app_db
+      DATABASE_URL:
       USER_SERVICE_URL: 0.0.0.0:5001
       NODE_ENV: production
     ports:
@@ -64,10 +64,10 @@ services:
     container_name: wallet-service
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app_db
-      WALLET_SERVICE_URL: 0.0.0.0:5002
-      USER_SERVICE_URL: user-service:5001
-      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      WALLET_SERVICE_URL: ${WALLET_SERVICE_URL}
+      USER_SERVICE_URL: ${USER_SERVICE_URL}
+      NODE_ENV: ${NODE_ENV}
     ports:
       - '5002:5002'
     depends_on:

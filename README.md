@@ -138,6 +138,45 @@ cd apps/wallet-service && npm run start:dev
 
 ---
 
+## 🌐 Deployed Services
+
+This project is already deployed. Use the following URLs to access the deployed services:
+
+- User Service: https://user-service-fjbq.onrender.com
+- Wallet Service: https://wallet-service-8v1o.onrender.com
+
+Note:
+- These endpoints are the publicly reachable service hostnames. When calling the deployed services with gRPC tools, ensure you use the proper TLS/port settings (see the gRPC note below).
+- If you plan to call the deployed gRPC endpoints from other services or clients, configure `USER_SERVICE_URL` and `WALLET_SERVICE_URL` environment variables in your deployment platform to point to the above hostnames (or to private/internal hostnames if using private networking).
+
+---
+
+## 🔊 Note about using gRPC (important)
+
+This system uses gRPC as the transport. A few practical tips when interacting with the services:
+
+- Local development typically uses plaintext (no TLS) on ports 5001 and 5002. Use the `-plaintext` flag with `grpcurl` or other clients when talking to local instances.
+- Deployed services on Render are served over HTTPS/TLS. When calling the deployed services with `grpcurl` or other gRPC clients:
+  - Do NOT use `-plaintext`.
+  - Target the host at port 443 (or omit the port if your client defaults to TLS on 443).
+  - Example (using `grpcurl` to call the deployed User service):
+    ```bash
+    grpcurl -proto packages/proto/user.proto \
+      -d '{"id":"<USER_ID>"}' \
+      user-service-fjbq.onrender.com:443 user.UserService/GetUserById
+    ```
+  - If you need to test with TLS disabled (not recommended for production), you can run the service locally and use:
+    ```bash
+    grpcurl -plaintext -proto packages/proto/user.proto \
+      -d '{"id":"<USER_ID>"}' localhost:5001 user.UserService/GetUserById
+    ```
+- When building Docker images, ensure `packages/proto` and `packages/prisma/schema.prisma` are included in the build context so the runtime can find `.proto` and Prisma schema files.
+- When deploying multiple services, prefer using private/internal networking (if available) for inter-service gRPC traffic. If not available, secure public endpoints and set the service environment variables to the public hostnames.
+
+See the "API Testing" section below for more `grpcurl` examples.
+
+---
+
 ## 🧪 API Testing
 
 All services expose **gRPC** endpoints. Use [`grpcurl`](https://github.com/fullstorydev/grpcurl) for quick CLI testing, or import the Postman collection from `docs/wallet-system.postman_collection.json`.
@@ -154,15 +193,21 @@ go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
 
 ---
 
-### User Service — `localhost:5001`
+### User Service — `localhost:5001` (dev) / deployed host
 
-#### CreateUser
-
+#### CreateUser (dev)
 ```bash
 grpcurl -plaintext \
   -proto packages/proto/user.proto \
   -d '{"email": "john.doe@example.com", "name": "John Doe"}' \
   localhost:5001 user.UserService/CreateUser
+```
+
+#### CreateUser (deployed)
+```bash
+grpcurl -proto packages/proto/user.proto \
+  -d '{"email":"john.doe@example.com","name":"John Doe"}' \
+  user-service-fjbq.onrender.com:443 user.UserService/CreateUser
 ```
 
 **Response:**
@@ -175,8 +220,7 @@ grpcurl -plaintext \
 }
 ```
 
-#### GetUserById
-
+#### GetUserById (dev)
 ```bash
 grpcurl -plaintext \
   -proto packages/proto/user.proto \
@@ -184,12 +228,18 @@ grpcurl -plaintext \
   localhost:5001 user.UserService/GetUserById
 ```
 
+#### GetUserById (deployed)
+```bash
+grpcurl -proto packages/proto/user.proto \
+  -d '{"id":"<USER_ID>"}' \
+  user-service-fjbq.onrender.com:443 user.UserService/GetUserById
+```
+
 ---
 
-### Wallet Service — `localhost:5002`
+### Wallet Service — `localhost:5002` (dev) / deployed host
 
-#### CreateWallet
-
+#### CreateWallet (dev)
 Wallet Service will call User Service internally to verify the user exists before creating a wallet.
 
 ```bash
@@ -197,6 +247,13 @@ grpcurl -plaintext \
   -proto packages/proto/wallet.proto \
   -d '{"userId": "<USER_ID>"}' \
   localhost:5002 wallet.WalletService/CreateWallet
+```
+
+#### CreateWallet (deployed)
+```bash
+grpcurl -proto packages/proto/wallet.proto \
+  -d '{"userId":"<USER_ID>"}' \
+  wallet-service-8v1o.onrender.com:443 wallet.WalletService/CreateWallet
 ```
 
 **Response:**
@@ -210,7 +267,6 @@ grpcurl -plaintext \
 ```
 
 #### GetWallet
-
 ```bash
 grpcurl -plaintext \
   -proto packages/proto/wallet.proto \
@@ -219,7 +275,6 @@ grpcurl -plaintext \
 ```
 
 #### CreditWallet
-
 ```bash
 grpcurl -plaintext \
   -proto packages/proto/wallet.proto \
@@ -238,7 +293,6 @@ grpcurl -plaintext \
 ```
 
 #### DebitWallet
-
 ```bash
 grpcurl -plaintext \
   -proto packages/proto/wallet.proto \
@@ -251,39 +305,34 @@ grpcurl -plaintext \
 ### End-to-End Flow (copy-paste ready)
 
 ```bash
-# 1. Create a user
-USER=$(grpcurl -plaintext \
-  -proto packages/proto/user.proto \
+# 1. Create a user (deployed example)
+USER=$(grpcurl -proto packages/proto/user.proto \
   -d '{"email":"test@example.com","name":"Test User"}' \
-  localhost:5001 user.UserService/CreateUser)
+  user-service-fjbq.onrender.com:443 user.UserService/CreateUser)
 
 echo $USER
 USER_ID=$(echo $USER | grep -o '"id": *"[^"]*"' | head -1 | cut -d'"' -f4)
 echo "User ID: $USER_ID"
 
-# 2. Create wallet for that user
-grpcurl -plaintext \
-  -proto packages/proto/wallet.proto \
+# 2. Create wallet for that user (deployed)
+grpcurl -proto packages/proto/wallet.proto \
   -d "{\"userId\": \"$USER_ID\"}" \
-  localhost:5002 wallet.WalletService/CreateWallet
+  wallet-service-8v1o.onrender.com:443 wallet.WalletService/CreateWallet
 
 # 3. Credit wallet
-grpcurl -plaintext \
-  -proto packages/proto/wallet.proto \
+grpcurl -proto packages/proto/wallet.proto \
   -d "{\"userId\": \"$USER_ID\", \"amount\": 1000}" \
-  localhost:5002 wallet.WalletService/CreditWallet
+  wallet-service-8v1o.onrender.com:443 wallet.WalletService/CreditWallet
 
 # 4. Debit wallet
-grpcurl -plaintext \
-  -proto packages/proto/wallet.proto \
+grpcurl -proto packages/proto/wallet.proto \
   -d "{\"userId\": \"$USER_ID\", \"amount\": 250}" \
-  localhost:5002 wallet.WalletService/DebitWallet
+  wallet-service-8v1o.onrender.com:443 wallet.WalletService/DebitWallet
 
 # 5. Check final balance
-grpcurl -plaintext \
-  -proto packages/proto/wallet.proto \
+grpcurl -proto packages/proto/wallet.proto \
   -d "{\"userId\": \"$USER_ID\"}" \
-  localhost:5002 wallet.WalletService/GetWallet
+  wallet-service-8v1o.onrender.com:443 wallet.WalletService/GetWallet
 ```
 
 ---
@@ -398,14 +447,22 @@ apps/wallet-service/src/
     ├── dto/wallet.dto.ts           # Validated DTOs for all operations
     ├── wallets.service.ts          # Business logic + $transaction
     └── wallets.controller.ts       # GrpcMethod handlers
-
-packages/
-├── proto/
-│   ├── user.proto
-│   └── wallet.proto
-└── prisma/
-    ├── schema.prisma
-    └── migrations/
-        └── 20240101000000_init/
-            └── migration.sql
 ```
+
+---
+
+## 🛠️ Troubleshooting & Notes
+
+- Ensure `packages/proto` and `packages/prisma/schema.prisma` are available in your Docker build context so runtime and `prisma generate` can find them.
+- When using monorepo workspaces, prefer installing dependencies at repo root (hoisted) to avoid duplicate `node_modules` and conflicting versions.
+- If you deploy to cloud providers (Render, etc.), configure `DATABASE_URL`, `USER_SERVICE_URL`, and `WALLET_SERVICE_URL` via environment variables.
+- For production DB migrations, use `npx prisma migrate deploy` (not `migrate dev`).
+
+---
+
+If you want, I can:
+- Add a short `deploy.md` with step-by-step Render deployment instructions using the Dockerfiles already in `apps/*`.
+- Create a `render.yaml` for one-click Render setup with the two services and a managed Postgres entry (you will need to add secrets and confirm plan).
+- Add a `health` HTTP endpoint to both services for platform health checks.
+
+Happy to help with any of the above — tell me which next step you want.
