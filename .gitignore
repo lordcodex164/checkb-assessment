@@ -5,3 +5,7 @@ node_modules/
 
 # Logs
 logs
+
+/packages/prisma
+
+/prisma/packages/prisma

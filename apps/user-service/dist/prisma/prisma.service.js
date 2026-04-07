@@ -14,11 +14,16 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PrismaService = void 0;
 const common_1 = require("@nestjs/common");
-const client_1 = require("@prisma/client");
+const client_1 = require("../../../../node_modules/.prisma/client/client");
+const adapter_pg_1 = require("@prisma/adapter-pg");
 const nestjs_pino_1 = require("nestjs-pino");
 let PrismaService = class PrismaService extends client_1.PrismaClient {
     constructor(logger) {
+        const adapter = new adapter_pg_1.PrismaPg({
+            connectionString: process.env.DATABASE_URL,
+        });
         super({
+            adapter,
             log: [
                 { emit: 'event', level: 'query' },
                 { emit: 'event', level: 'error' },
@@ -28,12 +33,16 @@ let PrismaService = class PrismaService extends client_1.PrismaClient {
         this.logger = logger;
     }
     async onModuleInit() {
-        await this.$connect();
-        this.logger.info('prisma connected to database');
+        this.logger.info('Prisma connected to database');
+        if (process.env.NODE_ENV !== 'production') {
+            this.$on('query', (e) => {
+                if (e.duration > 200) {
+                }
+            });
+        }
     }
     async onModuleDestroy() {
-        await this.$disconnect();
-        this.logger.info('prisma disconnected');
+        this.logger.info('Prisma disconnected from database');
     }
 };
 exports.PrismaService = PrismaService;

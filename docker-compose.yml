@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # PostgreSQL for User Service
+  user-db:
+    image: postgres:15-alpine
+    container_name: user-service-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: user_service_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL for Wallet Service
+  wallet-db:
+    image: postgres:15-alpine
+    container_name: wallet-service-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: wallet_service_db
+    ports:
+      - '5433:5432'
+    volumes:
+      - wallet_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # User Service
+  user-service:
+    build:
+      context: .
+      dockerfile: apps/user-service/Dockerfile
+    container_name: user-service
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@user-db:5432/user_service_db?schema=public
+      USER_SERVICE_URL: 0.0.0.0:5001
+      NODE_ENV: production
+    ports:
+      - '5001:5001'
+    depends_on:
+      user-db:
+        condition: service_healthy
+
+  # Wallet Service
+  wallet-service:
+    build:
+      context: .
+      dockerfile: apps/wallet-service/Dockerfile
+    container_name: wallet-service
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@wallet-db:5432/wallet_service_db?schema=public
+      WALLET_SERVICE_URL: 0.0.0.0:5002
+      USER_SERVICE_URL: user-service:5001
+      NODE_ENV: production
+    ports:
+      - '5002:5002'
+    depends_on:
+      wallet-db:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+
+volumes:
+  user_db_data:
+  wallet_db_data:

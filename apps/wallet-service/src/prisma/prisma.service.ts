@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '../../../../node_modules/.prisma/client';
+import { PrismaClient } from '../../../../node_modules/.prisma/client/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 
