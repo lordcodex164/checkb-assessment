@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { Transport } from '@nestjs/microservices';
-import { join } from 'path';
+  import { resolve } from 'path';
 import { AppModule } from './app.module';
 
-const PROTO_PATH = join(__dirname, '../../../../packages/proto/wallet.proto');
+const PROTO_PATH = resolve(__dirname, '../../../../packages/proto/wallet.proto');
 
 async function bootstrap() {
   console.log('PROTO_PATH', PROTO_PATH);
