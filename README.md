@@ -149,33 +149,6 @@ Note:
 - These endpoints are the publicly reachable service hostnames. When calling the deployed services with gRPC tools, ensure you use the proper TLS/port settings (see the gRPC note below).
 - If you plan to call the deployed gRPC endpoints from other services or clients, configure `USER_SERVICE_URL` and `WALLET_SERVICE_URL` environment variables in your deployment platform to point to the above hostnames (or to private/internal hostnames if using private networking).
 
----
-
-## 🔊 Note about using gRPC (important)
-
-This system uses gRPC as the transport. A few practical tips when interacting with the services:
-
-- Local development typically uses plaintext (no TLS) on ports 5001 and 5002. Use the `-plaintext` flag with `grpcurl` or other clients when talking to local instances.
-- Deployed services on Render are served over HTTPS/TLS. When calling the deployed services with `grpcurl` or other gRPC clients:
-  - Do NOT use `-plaintext`.
-  - Target the host at port 443 (or omit the port if your client defaults to TLS on 443).
-  - Example (using `grpcurl` to call the deployed User service):
-    ```bash
-    grpcurl -proto packages/proto/user.proto \
-      -d '{"id":"<USER_ID>"}' \
-      user-service-fjbq.onrender.com:443 user.UserService/GetUserById
-    ```
-  - If you need to test with TLS disabled (not recommended for production), you can run the service locally and use:
-    ```bash
-    grpcurl -plaintext -proto packages/proto/user.proto \
-      -d '{"id":"<USER_ID>"}' localhost:5001 user.UserService/GetUserById
-    ```
-- When building Docker images, ensure `packages/proto` and `packages/prisma/schema.prisma` are included in the build context so the runtime can find `.proto` and Prisma schema files.
-- When deploying multiple services, prefer using private/internal networking (if available) for inter-service gRPC traffic. If not available, secure public endpoints and set the service environment variables to the public hostnames.
-
-See the "API Testing" section below for more `grpcurl` examples.
-
----
 
 ## 🧪 API Testing
 

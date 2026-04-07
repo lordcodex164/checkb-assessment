@@ -13,7 +13,7 @@ async function bootstrap() {
         options: {
             package: 'user',
             protoPath: PROTO_PATH,
-            url: process.env.USER_SERVICE_URL || '0.0.0.0:5001',
+            url: '0.0.0.0:5001',
         },
     });
     await app.startAllMicroservices();

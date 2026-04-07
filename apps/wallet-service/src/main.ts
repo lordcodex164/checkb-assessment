@@ -14,7 +14,7 @@ async function bootstrap() {
     options: {
       package: 'wallet',
       protoPath: PROTO_PATH,
-      url: process.env.WALLET_SERVICE_URL || '0.0.0.0:5002',
+      url: '0.0.0.0:5002',
     },
   });
 
