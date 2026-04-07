@@ -63,8 +63,9 @@ export class WalletService implements OnModuleInit {
 
     const wallet = await this.prisma.wallet.create({
       data: {
-        userId: '34',
+        userId: dto.userId,
         balance: 0,
+        type: dto.type,
       } as Prisma.WalletUncheckedCreateInput,
     });
 
@@ -217,7 +218,8 @@ export class WalletService implements OnModuleInit {
       id: wallet.id,
       userId: wallet.userId,
       balance: wallet.balance,
-      createdAt: wallet.createdAt.toISOString(),
+      type: wallet.type,
+      createdAt: wallet?.createdAt?.toISOString(),
     };
   }
 }

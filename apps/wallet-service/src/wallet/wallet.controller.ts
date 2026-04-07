@@ -21,7 +21,7 @@ export class WalletController {
   ) {}
 
   @GrpcMethod('WalletService', 'CreateWallet')
-  async createWallet(data: { userId: string }) {
+  async createWallet(data: { userId: string; type: string }) {
     this.logger.info({ data }, 'gRPC CreateWallet called');
     await this.validateDto(CreateWalletDto, data);
 

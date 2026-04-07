@@ -11,6 +11,10 @@ export class CreateWalletDto {
   @IsNotEmpty({ message: 'userId is required' })
   @IsUUID('4', { message: 'userId must be a valid UUID' })
   userId: string;
+
+  @IsString({ message: 'type must be a string' })
+  @IsNotEmpty({ message: 'type is required' })
+  type: string;
 }
 
 export class GetWalletDto {

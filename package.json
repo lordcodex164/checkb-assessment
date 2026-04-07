@@ -15,6 +15,7 @@
     "prisma:generate": "cd packages/prisma && npx prisma generate",
     "postinstall": "cd packages/prisma && npx prisma generate",
     "prisma:migrate": "cd packages/prisma && npx prisma migrate dev",
+    "prisma:reset": "cd packages/prisma && npx prisma migrate reset",
     "prisma:studio": "cd packages/prisma && npx prisma studio",
     "prisma:pull": "cd packages/prisma && npx prisma db pull",
     "install:all": "npm install && cd apps/user-service && npm install && cd ../../apps/wallet-service && npm install"

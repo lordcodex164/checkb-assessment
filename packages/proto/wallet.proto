@@ -11,6 +11,7 @@ service WalletService {
 
 message CreateWalletRequest {
   string userId = 1;
+  string type = 2;
 }
 
 message GetWalletRequest {
