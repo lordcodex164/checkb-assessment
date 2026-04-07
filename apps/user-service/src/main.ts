@@ -21,7 +21,7 @@ async function bootstrap() {
   await app.startAllMicroservices();
 
   // 4. Start HTTP (this is what Render needs)
-  const port = process.env.PORT || 5001;
+  const port = process.env.PORT || 3001;
   app.useLogger(app.get(Logger));
   await app.listen(port);
 

@@ -17,7 +17,7 @@ async function bootstrap() {
         },
     });
     await app.startAllMicroservices();
-    const port = process.env.PORT || 5001;
+    const port = process.env.PORT || 3001;
     app.useLogger(app.get(nestjs_pino_1.Logger));
     await app.listen(port);
     console.log(`HTTP running on ${port}`);
