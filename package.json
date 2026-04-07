@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "start:api": "cd apps/api-gateway && npm run start:dev",
     "start:user": "cd apps/user-service && npm run start:dev",
     "start:wallet": "cd apps/wallet-service && npm run start:dev",
     "build:user": "cd apps/user-service && npm run build",

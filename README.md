@@ -149,6 +149,11 @@ Note:
 - These endpoints are the publicly reachable service hostnames. When calling the deployed services with gRPC tools, ensure you use the proper TLS/port settings (see the gRPC note below).
 - If you plan to call the deployed gRPC endpoints from other services or clients, configure `USER_SERVICE_URL` and `WALLET_SERVICE_URL` environment variables in your deployment platform to point to the above hostnames (or to private/internal hostnames if using private networking).
 
+🧠 Key reality (important)
+Scenario	                            Works on Render?
+REST (HTTP/1.1)	                        ✅ Yes
+gRPC internal (same container/network)	✅ Yes
+gRPC external (Postman, grpcurl)	      ❌ No
 
 ## 🧪 API Testing
 

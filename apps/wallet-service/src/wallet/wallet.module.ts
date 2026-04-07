@@ -7,5 +7,6 @@ import { GrpcClientModule } from 'src/grpc/grpc-client.module';
   imports: [GrpcClientModule],
   controllers: [WalletController],
   providers: [WalletService],
+  exports: [WalletService],
 })
 export class WalletModule {}
