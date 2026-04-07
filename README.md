@@ -2,6 +2,8 @@
 
 A production-ready, microservice-based wallet system built with **NestJS**, **gRPC**, **Prisma ORM**, and **PostgreSQL** in a monorepo architecture.
 
+**HTTP clients (Postman, curl, browsers, mobile apps) should call the API Gateway.** The gateway accepts REST/JSON and forwards to the **User** and **Wallet** microservices over gRPC. You can still call those services directly with gRPC tools (e.g. `grpcurl`) for debugging.
+
 ---
 
 ## 📐 Architecture
@@ -9,8 +11,9 @@ A production-ready, microservice-based wallet system built with **NestJS**, **gR
 ```
 backend-assessment/
 ├── apps/
-│   ├── user-service/          # Manages users (gRPC port 5001)
-│   └── wallet-service/        # Manages wallets (gRPC port 5002)
+│   ├── api-gateway/           # HTTP → gRPC bridge (REST, default port 3000)
+│   ├── user-service/          # Users (gRPC port 5001)
+│   └── wallet-service/        # Wallets (gRPC port 5002)
 │
 ├── packages/
 │   ├── proto/                 # Shared .proto definitions
@@ -29,14 +32,18 @@ backend-assessment/
 ### Service Communication
 
 ```
-Client
+Client (HTTP/JSON)
   │
-  ├──gRPC──► User Service (port 5001) ──► user_service_db (PostgreSQL :5432)
-  │
-  └──gRPC──► Wallet Service (port 5002) ──► wallet_service_db (PostgreSQL :5433)
-                    │
-                    └──gRPC──► User Service (verifies user exists)
+  └──► API Gateway (HTTP :3000)
+          │
+          ├──gRPC──► User Service (:5001) ──► PostgreSQL (user DB)
+          │
+          └──gRPC──► Wallet Service (:5002) ──► PostgreSQL (wallet DB)
+                              │
+                              └──gRPC──► User Service (verifies user exists)
 ```
+
+Direct gRPC clients can also talk to User / Wallet services on `5001` / `5002` without going through the gateway.
 
 ---
 
@@ -58,9 +65,11 @@ Spin up both services and both databases in one command:
 docker-compose up --build
 ```
 
-Both services will be available immediately:
-- User Service  → `localhost:5001`
-- Wallet Service → `localhost:5002`
+Both backend services will be available:
+- User Service → `localhost:5001` (gRPC)
+- Wallet Service → `localhost:5002` (gRPC)
+
+The **API Gateway** is not defined in `docker-compose.yml` in this repo. To exercise **HTTP** endpoints locally, run the gateway on your machine (see Option B) after the stack is up, or add an `api-gateway` service to Compose that publishes port `3000` and sets `USER_SERVICE_URL` / `WALLET_SERVICE_URL` to the user and wallet containers (e.g. `user-service:5001`, `wallet-service:5002` on the Compose network).
 
 ---
 
@@ -77,6 +86,9 @@ cd apps/user-service && npm install
 
 # Wallet Service
 cd apps/wallet-service && npm install
+
+# API Gateway (HTTP)
+cd apps/api-gateway && npm install
 ```
 
 #### 2. Create the databases
@@ -104,6 +116,16 @@ USER_SERVICE_URL=localhost:5001
 NODE_ENV=development
 ```
 
+**API Gateway** — optional `.env` in `apps/api-gateway/` (defaults match local dev if omitted):
+
+```env
+PORT=3000
+USER_SERVICE_URL=localhost:5001
+WALLET_SERVICE_URL=localhost:5002
+```
+
+The gateway uses these addresses to reach the User and Wallet gRPC servers (`host:port`, no `http://` prefix).
+
 #### 4. Run Prisma migrations
 
 Each service shares the same schema but uses its own database. Run migrations for both:
@@ -126,7 +148,9 @@ Generate the Prisma client:
 npx prisma generate --schema=packages/prisma/schema.prisma
 ```
 
-#### 5. Start the services (two terminals)
+#### 5. Start the services (three terminals)
+
+Start **User** and **Wallet** first so the gateway can connect when it boots.
 
 ```bash
 # Terminal 1 — User Service
@@ -134,20 +158,31 @@ cd apps/user-service && npm run start:dev
 
 # Terminal 2 — Wallet Service
 cd apps/wallet-service && npm run start:dev
+
+# Terminal 3 — API Gateway (HTTP for Postman / curl)
+cd apps/api-gateway && npm run start:dev
+# or from repo root: npm run start:api
 ```
+
+The HTTP API is served at **`http://localhost:3000`** (or whatever you set `PORT` to). Use the routes in [HTTP API (API Gateway)](#http-api-api-gateway) below.
 
 ---
 
 ## 🌐 Deployed Services
 
-This project is already deployed. Use the following URLs to access the deployed services:
+This project includes deployed **gRPC** backends:
 
-- User Service: https://user-service-fjbq.onrender.com
-- Wallet Service: https://wallet-service-8v1o.onrender.com
+- User Service: `https://user-service-fjbq.onrender.com` (gRPC; use port `443` with TLS in `grpcurl`)
+- Wallet Service: `https://wallet-service-8v1o.onrender.com` (gRPC; port `443`)
 
-Note:
-- These endpoints are the publicly reachable service hostnames. When calling the deployed services with gRPC tools, ensure you use the proper TLS/port settings (see the gRPC note below).
-- If you plan to call the deployed gRPC endpoints from other services or clients, configure `USER_SERVICE_URL` and `WALLET_SERVICE_URL` environment variables in your deployment platform to point to the above hostnames (or to private/internal hostnames if using private networking).
+There is **no** shared public URL for the API Gateway in this README—expose your own HTTP gateway in front of these services if you need REST on the internet. Locally, use [HTTP API (API Gateway)](#http-api-api-gateway) against `http://localhost:3000`.
+
+**Notes**
+
+- When calling deployed services with gRPC tools, use the proper TLS/port settings (see below).
+- For other services (or a self-hosted API Gateway), set `USER_SERVICE_URL` and `WALLET_SERVICE_URL` to reachable `host:port` values (internal hostnames on a private network are fine).
+
+---
 
 🧠 Key reality (important)
 Scenario	                            Works on Render?
@@ -155,9 +190,74 @@ REST (HTTP/1.1)	                        ✅ Yes
 gRPC internal (same container/network)	✅ Yes
 gRPC external (Postman, grpcurl)	      ❌ No
 
-## 🧪 API Testing
+## 🌐 HTTP API (API Gateway)
 
-All services expose **gRPC** endpoints. Use [`grpcurl`](https://github.com/fullstorydev/grpcurl) for quick CLI testing, or import the Postman collection from `docs/wallet-system.postman_collection.json`.
+Use this surface for **Postman**, **curl**, and any HTTP client. The gateway validates JSON bodies (`class-validator`) and translates requests to gRPC calls.
+
+| Item | Value |
+|------|--------|
+| **Default base URL** | `http://localhost:3000` |
+| **Port** | `PORT` env (default `3000`) |
+| **Upstream gRPC** | `USER_SERVICE_URL`, `WALLET_SERVICE_URL` (`host:port`, e.g. `localhost:5001`) |
+
+### Routes
+
+| Method | Path | Body (JSON) | Maps to gRPC |
+|--------|------|-------------|--------------|
+| `GET` | `/` | — | App root (hello string) |
+| `POST` | `/users` | `{ "email": string, "name": string }` | `CreateUser` |
+| `GET` | `/users/:id` | — | `GetUserById` (`:id` = user UUID) |
+| `POST` | `/wallets` | `{ "userId": string (UUID v4), "type": string }` | `CreateWallet` |
+| `GET` | `/wallets/:id` | — | `GetWallet` (`:id` is the **user** UUID, not the wallet row id) |
+| `POST` | `/wallets/:id/debit` | `{ "amount": number }` (positive) | `DebitWallet` |
+| `POST` | `/wallets/:id/credit` | `{ "amount": number }` (positive) | `CreditWallet` |
+
+**Notes**
+
+- Wallet routes use `:id` in the URL, but that value is sent to the backend as **`userId`** (per `wallet.proto`).
+- Unknown JSON fields are rejected when validation runs with `forbidNonWhitelisted` (gateway `main.ts`).
+
+### Examples (curl)
+
+```bash
+BASE=http://localhost:3000
+
+# Create user
+curl -s -X POST "$BASE/users" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"john@example.com","name":"John Doe"}'
+
+# Get user (replace USER_ID)
+curl -s "$BASE/users/USER_ID"
+
+# Create wallet (user must exist; pick a wallet type string used by your data layer)
+curl -s -X POST "$BASE/wallets" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"USER_ID","type":"standard"}'
+
+# Get wallet by user id
+curl -s "$BASE/wallets/USER_ID"
+
+curl -s -X POST "$BASE/wallets/USER_ID/credit" \
+  -H "Content-Type: application/json" \
+  -d '{"amount":1000}'
+
+curl -s -X POST "$BASE/wallets/USER_ID/debit" \
+  -H "Content-Type: application/json" \
+  -d '{"amount":250}'
+```
+
+### Postman
+
+Create a collection with **base URL** `http://localhost:3000` (or your Docker-published port). Use **Body → raw → JSON** for `POST` requests. No gRPC or TLS configuration is required on the gateway itself.
+
+---
+
+## 🧪 API Testing (direct gRPC)
+
+The **User** and **Wallet** services expose **gRPC** on ports **5001** and **5002**. Use [`grpcurl`](https://github.com/fullstorydev/grpcurl) for CLI testing, or import `docs/wallet-system.postman_collection.json` if your collection targets gRPC directly.
+
+For typical app integration and Postman-over-HTTP, prefer the [HTTP API (API Gateway)](#http-api-api-gateway) section above.
 
 ### Install grpcurl
 
@@ -223,14 +323,14 @@ Wallet Service will call User Service internally to verify the user exists befor
 ```bash
 grpcurl -plaintext \
   -proto packages/proto/wallet.proto \
-  -d '{"userId": "<USER_ID>"}' \
+  -d '{"userId": "<USER_ID>", "type": "standard"}' \
   localhost:5002 wallet.WalletService/CreateWallet
 ```
 
 #### CreateWallet (deployed)
 ```bash
 grpcurl -proto packages/proto/wallet.proto \
-  -d '{"userId":"<USER_ID>"}' \
+  -d '{"userId":"<USER_ID>","type":"standard"}' \
   wallet-service-8v1o.onrender.com:443 wallet.WalletService/CreateWallet
 ```
 
@@ -294,7 +394,7 @@ echo "User ID: $USER_ID"
 
 # 2. Create wallet for that user (deployed)
 grpcurl -proto packages/proto/wallet.proto \
-  -d "{\"userId\": \"$USER_ID\"}" \
+  -d "{\"userId\": \"$USER_ID\", \"type\": \"standard\"}" \
   wallet-service-8v1o.onrender.com:443 wallet.WalletService/CreateWallet
 
 # 3. Credit wallet
@@ -350,7 +450,7 @@ model Wallet {
 
 | Method | Request | Response |
 |---|---|---|
-| `CreateWallet` | `{ userId }` | `WalletResponse` |
+| `CreateWallet` | `{ userId, type }` | `WalletResponse` |
 | `GetWallet` | `{ userId }` | `WalletResponse` |
 | `CreditWallet` | `{ userId, amount }` | `WalletResponse` |
 | `DebitWallet` | `{ userId, amount }` | `WalletResponse` |
@@ -382,6 +482,7 @@ All errors are returned as gRPC status codes:
 | **Error Handling** | Typed gRPC status codes for every failure path: not found, conflict, insufficient funds, bad input |
 | **Structured Logging** | `nestjs-pino` with pretty-print in dev and JSON in production; every service method emits structured logs with context |
 | **Inter-service gRPC** | Wallet Service calls `UserService.GetUserById` via gRPC before creating a wallet |
+| **API Gateway** | Single HTTP entry point; maps REST routes to user and wallet gRPC with validated DTOs |
 
 ---
 
@@ -390,6 +491,7 @@ All errors are returned as gRPC status codes:
 | Layer | Technology |
 |---|---|
 | Framework | NestJS 10 |
+| Public HTTP API | API Gateway (REST/JSON, ValidationPipe) |
 | Transport | gRPC (`@nestjs/microservices`, `@grpc/grpc-js`) |
 | ORM | Prisma 5 |
 | Database | PostgreSQL 15 |
@@ -402,16 +504,31 @@ All errors are returned as gRPC status codes:
 ## 📁 Key Files at a Glance
 
 ```
+apps/api-gateway/src/
+├── main.ts                        # HTTP listen (PORT), global ValidationPipe
+├── app.module.ts                  # Imports UserModule + WalletModule
+├── grpc-proto.paths.ts            # Resolves shared .proto files from the monorepo
+├── user/                          # REST /users → UserService gRPC
+│   ├── user.module.ts
+│   ├── user.controller.ts
+│   ├── user-grpc.service.ts
+│   └── dto/create-user.dto.ts
+└── wallet/                        # REST /wallets → WalletService gRPC
+    ├── wallet.module.ts
+    ├── wallet.controller.ts
+    ├── wallet-grpc.service.ts
+    └── dto/
+
 apps/user-service/src/
 ├── main.ts                        # gRPC bootstrap (port 5001)
 ├── app.module.ts                  # Root module with Pino logger
 ├── prisma/
 │   ├── prisma.service.ts          # PrismaClient wrapper
 │   └── prisma.module.ts
-└── users/
-    ├── dto/create-user.dto.ts     # class-validator DTO
-    ├── users.service.ts           # Business logic
-    └── users.controller.ts        # GrpcMethod handlers
+└── user/
+    ├── dto/createuser.dto.ts      # class-validator DTO
+    ├── user.service.ts            # Business logic
+    └── user.controller.ts         # GrpcMethod handlers
 
 apps/wallet-service/src/
 ├── main.ts                        # gRPC bootstrap (port 5002)
@@ -421,26 +538,20 @@ apps/wallet-service/src/
 │   └── prisma.module.ts
 ├── grpc/
 │   └── grpc-client.module.ts      # ClientsModule → UserService
-└── wallets/
+└── wallet/
     ├── dto/wallet.dto.ts           # Validated DTOs for all operations
-    ├── wallets.service.ts          # Business logic + $transaction
-    └── wallets.controller.ts       # GrpcMethod handlers
+    ├── wallet.service.ts           # Business logic + $transaction
+    └── wallet.controller.ts        # GrpcMethod handlers
 ```
 
 ---
 
 ## 🛠️ Troubleshooting & Notes
 
+- **API Gateway cannot reach User/Wallet:** Ensure `USER_SERVICE_URL` and `WALLET_SERVICE_URL` match where gRPC is listening (`localhost:5001` / `localhost:5002` locally; Docker Compose service names and ports on that network when the gateway runs in Compose).
 - Ensure `packages/proto` and `packages/prisma/schema.prisma` are available in your Docker build context so runtime and `prisma generate` can find them.
 - When using monorepo workspaces, prefer installing dependencies at repo root (hoisted) to avoid duplicate `node_modules` and conflicting versions.
 - If you deploy to cloud providers (Render, etc.), configure `DATABASE_URL`, `USER_SERVICE_URL`, and `WALLET_SERVICE_URL` via environment variables.
 - For production DB migrations, use `npx prisma migrate deploy` (not `migrate dev`).
 
 ---
-
-If you want, I can:
-- Add a short `deploy.md` with step-by-step Render deployment instructions using the Dockerfiles already in `apps/*`.
-- Create a `render.yaml` for one-click Render setup with the two services and a managed Postgres entry (you will need to add secrets and confirm plan).
-- Add a `health` HTTP endpoint to both services for platform health checks.
-
-Happy to help with any of the above — tell me which next step you want.

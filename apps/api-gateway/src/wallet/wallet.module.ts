@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { WALLET_PROTO_PATH } from '../grpc-proto.paths';
 import { WalletController } from './wallet.controller';
 import { WalletGrpcService } from './wallet-grpc.service';
 import { WALLET_SERVICE } from './wallet.constants';
-import { resolve } from 'path';
-
-const WALLET_PROTO_PATH = resolve(__dirname, '../../../packages/proto/wallet.proto');
 
 @Module({
   imports: [
@@ -33,4 +31,4 @@ const WALLET_PROTO_PATH = resolve(__dirname, '../../../packages/proto/wallet.pro
   providers: [WalletGrpcService],
   exports: [WalletGrpcService],
 })
-export class WalletModule {}
+export class WalletModule { }
