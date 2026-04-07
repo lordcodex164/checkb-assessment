@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
-//import { UsersModule } from './users/users.module';
+import { UserModule } from './user/user.module';
 import { PrismaModule } from './prisma/prisma.module';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import 'pino-pretty';
 
 @Module({
@@ -32,9 +30,7 @@ import 'pino-pretty';
       },
     }),
     PrismaModule,
-    //UsersModule,
+    UserModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

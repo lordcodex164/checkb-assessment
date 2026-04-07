@@ -6,30 +6,24 @@ WORKDIR /app
 COPY package.json ./
 COPY apps/wallet-service/package.json ./apps/wallet-service/
 COPY packages/prisma ./packages/prisma/
-
-# Install dependencies
-RUN cd apps/wallet-service && npm install
+RUN npm install --ignore-scripts
 
 # Copy source files
 COPY apps/wallet-service ./apps/wallet-service
-COPY packages ./packages
+COPY packages/proto ./packages/proto
 
-# Generate Prisma client
-RUN cd apps/wallet-service && npx prisma generate --schema=../../packages/prisma/schema.prisma
+# Generate Prisma client from root schema, then build service
+RUN npx prisma generate --schema=packages/prisma/schema.prisma
+RUN npm run build --prefix apps/wallet-service
 
-# Build
-RUN cd apps/wallet-service && npm run build
-
-# ---- Production image ----
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 WORKDIR /app
+ENV NODE_ENV=production
 
-COPY --from=builder /app/apps/wallet-service/dist ./dist
-COPY --from=builder /app/apps/wallet-service/node_modules ./node_modules
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/wallet-service/dist ./apps/wallet-service/dist
+COPY --from=builder /app/packages/proto ./packages/proto
 
-EXPOSE 5002
-
-CMD ["node", "dist/main"]
+EXPOSE 5001
+CMD ["node", "apps/wallet-service/dist/main.js"]

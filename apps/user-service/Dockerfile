@@ -1,35 +1,29 @@
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Copy root package files
-COPY package.json ./
+# Install dependencies once at workspace root (skip scripts to avoid premature prisma generate)
+COPY package.json package-lock.json ./
 COPY apps/user-service/package.json ./apps/user-service/
-COPY packages/prisma ./packages/prisma/
+COPY packages/prisma ./packages/prisma
+RUN npm install --ignore-scripts
 
-# Install dependencies
-RUN cd apps/user-service && npm install
-
-# Copy source files
+# Copy source needed for build/runtime
 COPY apps/user-service ./apps/user-service
-COPY packages ./packages
+COPY packages/proto ./packages/proto
 
-# Generate Prisma client
-RUN cd apps/user-service && npx prisma generate --schema=../../../packages/prisma/schema.prisma
+# Generate Prisma client from root schema, then build service
+RUN npx prisma generate --schema=packages/prisma/schema.prisma
+RUN npm run build --prefix apps/user-service
 
-# Build
-RUN cd apps/user-service && npm run build
-
-# ---- Production image ----
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 WORKDIR /app
+ENV NODE_ENV=production
 
-COPY --from=builder /app/apps/user-service/dist ./dist
-COPY --from=builder /app/apps/user-service/node_modules ./node_modules
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/user-service/dist ./apps/user-service/dist
+COPY --from=builder /app/packages/proto ./packages/proto
 
 EXPOSE 5001
-
-CMD ["node", "dist/main"]
+CMD ["node", "apps/user-service/dist/main.js"]
