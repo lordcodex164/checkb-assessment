@@ -6,7 +6,7 @@ import { UserController } from './user.controller';
 import { UserGrpcService } from './user-grpc.service';
 import { USER_SERVICE } from './user.constants';
 
-const USER_PROTO_PATH = resolve(__dirname, '../../../packages/proto/user.proto');
+const USER_PROTO_PATH = resolve(__dirname, '../../../../packages/proto/user.proto');
 
 @Module({
   imports: [
