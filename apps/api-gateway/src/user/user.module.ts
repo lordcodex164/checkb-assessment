@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { USER_PROTO_PATH } from '../grpc-proto.paths';
+import { resolve } from 'path';
 import { UserController } from './user.controller';
 import { UserGrpcService } from './user-grpc.service';
 import { USER_SERVICE } from './user.constants';
+
+const USER_PROTO_PATH = resolve(__dirname, '../../../packages/proto/user.proto');
 
 @Module({
   imports: [
