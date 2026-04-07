@@ -20,12 +20,12 @@ async function bootstrap() {
   // 3. Start gRPC
   await app.startAllMicroservices();
 
-  // 4. Start HTTP (this is what Render needs)
-  const port = process.env.PORT || 3001;
-  app.useLogger(app.get(Logger));
-  await app.listen(port);
+  // // 4. Start HTTP (this is what Render needs)
+  // const port = process.env.PORT || 3001;
+  // app.useLogger(app.get(Logger));
+  // await app.listen(port);
 
-  console.log(`HTTP running on ${port}`);
+  // console.log(`HTTP running on ${port}`);
   console.log(`gRPC running on 5001`);
   console.log('User Service is running on gRPC port 5001');
 }
