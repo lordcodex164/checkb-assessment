@@ -16,6 +16,8 @@ COPY packages/proto ./packages/proto
 # Generate Prisma Client (this must succeed)
 RUN npx prisma generate --schema=packages/prisma/schema.prisma
 
+COPY packages/prisma/schema.prisma ./packages/prisma/schema.prisma
+
 # Build the NestJS app
 RUN npm run build --prefix apps/user-service
 
@@ -38,4 +40,4 @@ COPY --from=builder /app/packages/prisma ./packages/prisma
 
 EXPOSE 5001
 
-CMD ["node", "apps/user-service/dist/main.js"]
+CMD ["ls", "-l", "node", "apps/user-service/dist/main.js"]
