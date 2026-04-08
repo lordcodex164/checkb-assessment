@@ -47,9 +47,9 @@ services:
     container_name: user-service
     restart: unless-stopped
     environment:
-      DATABASE_URL:
+      DATABASE_URL: ${DATABASE_URL}
       USER_SERVICE_URL: 0.0.0.0:5001
-      NODE_ENV: production
+      NODE_ENV: ${NODE_ENV}
     ports:
       - '5001:5001'
     depends_on:

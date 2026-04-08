@@ -15,60 +15,45 @@ export class UserService {
     private readonly logger: PinoLogger,
   ) {}
 
+  async createUser(dto: CreateUserDto) {
+    this.logger.info(
+      { op: 'createUser', email: dto.email, nameLength: dto.name.length },
+      'Checking email uniqueness before insert',
+    );
 
-  async createUser(dto: any) {
-
-    // Super detailed logging
-    this.logger.info({ 
-      op: 'createUser', 
-      receivedDto: dto,
-      keys: Object.keys(dto || {}),
-      email: dto?.email,
-      name: dto?.name,
-      emailType: typeof dto?.email
-    }, 'Full DTO received from gRPC');
-  
-    // Strong validation
-    if (!dto?.email || typeof dto.email !== 'string' || dto.email.trim() === '') {
-      this.logger.error({ received: dto }, 'Email is missing or invalid');
-      throw new Error('Email is required');
-    }
-  
-    if (!dto?.name || typeof dto.name !== 'string' || dto.name.trim() === '') {
-      this.logger.error({ received: dto }, 'Name is missing or invalid');
-      throw new Error('Name is required');
-    }
-  
-    const email = dto.email.trim();
-    const name = dto.name.trim();
-  
-    this.logger.info({ op: 'createUser', email }, 'Checking email uniqueness before insert');
-  
-    console.log("email passed to Prisma:", email);
-  
-    // Use findUnique instead of findFirst (since email is @unique)
     const existingUser = await this.prisma.user.findUnique({
-      where: { 
-        email: email 
-      },
+      where: { email: dto.email },
     });
-  
+
     if (existingUser) {
-      this.logger.warn({ op: 'createUser', email }, 'Email already registered');
-      throw new ConflictException(`User with email ${email} already exists`);
+      this.logger.warn(
+        { op: 'createUser', email: dto.email, existingUserId: existingUser.id },
+        'Email already registered',
+      );
+      throw new ConflictException(
+        `User with email ${dto.email} already exists`,
+      );
     }
-  
+
     const user = await this.prisma.user.create({
       data: {
-        email: email,
-        name: name,
+        email: dto.email,
+        name: dto.name,
       },
     });
-  
-    this.logger.info({ op: 'createUser', userId: user.id, email: user.email }, 'User created successfully');
+
+    this.logger.info(
+      {
+        op: 'createUser',
+        userId: user.id,
+        email: user.email,
+        createdAt: user.createdAt,
+      },
+      'User persisted',
+    );
     return this.formatUser(user);
   }
-  
+
   async getUserById(id: string) {
     this.logger.debug({ op: 'getUserById', userId: id }, 'Prisma findUnique');
 
@@ -87,11 +72,7 @@ export class UserService {
     }
 
     this.logger.info(
-      {
-        op: 'getUserById',
-        userId: user.id,
-        email: user.email,
-      },
+      { op: 'getUserById', userId: user.id, email: user.email },
       'User loaded',
     );
     return this.formatUser(user);

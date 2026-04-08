@@ -19,8 +19,13 @@ const adapter_pg_1 = require("@prisma/adapter-pg");
 const nestjs_pino_1 = require("nestjs-pino");
 let PrismaService = class PrismaService extends client_1.PrismaClient {
     constructor(logger) {
+        const connectionString = process.env.DATABASE_URL?.trim();
+        if (!connectionString) {
+            throw new Error('DATABASE_URL is not set or is empty. Prisma cannot connect to PostgreSQL. ' +
+                'Set DATABASE_URL in your environment (e.g. Render: add DATABASE_URL from your Postgres; Docker Compose: user-service DATABASE_URL is set in docker-compose.yml).');
+        }
         const adapter = new adapter_pg_1.PrismaPg({
-            connectionString: process.env.DATABASE_URL,
+            connectionString,
         });
         super({
             adapter,
