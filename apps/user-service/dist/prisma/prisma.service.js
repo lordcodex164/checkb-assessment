@@ -8,25 +8,26 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PrismaService = void 0;
 const common_1 = require("@nestjs/common");
 const client_1 = require("../../../../node_modules/.prisma/client");
 const adapter_pg_1 = require("@prisma/adapter-pg");
-const nestjs_pino_1 = require("nestjs-pino");
+const pg_1 = require("pg");
+const prisma_url_1 = require("./prisma-url");
 let PrismaService = class PrismaService extends client_1.PrismaClient {
-    constructor(logger) {
+    constructor() {
         const connectionString = process.env.DATABASE_URL?.trim();
         if (!connectionString) {
             throw new Error('DATABASE_URL is not set or is empty. Prisma cannot connect to PostgreSQL. ' +
-                'Set DATABASE_URL in your environment (e.g. Render: add DATABASE_URL from your Postgres; Docker Compose: user-service DATABASE_URL is set in docker-compose.yml).');
+                'Set DATABASE_URL in your environment (e.g. Render: add DATABASE_URL from your Postgres).');
         }
-        const adapter = new adapter_pg_1.PrismaPg({
-            connectionString,
+        const url = (0, prisma_url_1.normalizePostgresUrl)(connectionString);
+        const pool = new pg_1.Pool({
+            connectionString: url,
+            max: 10,
         });
+        const adapter = new adapter_pg_1.PrismaPg(pool);
         super({
             adapter,
             log: [
@@ -35,13 +36,15 @@ let PrismaService = class PrismaService extends client_1.PrismaClient {
                 { emit: 'event', level: 'warn' },
             ],
         });
-        this.logger = logger;
+        this.pool = pool;
+    }
+    async onModuleDestroy() {
+        await this.pool.end();
     }
 };
 exports.PrismaService = PrismaService;
 exports.PrismaService = PrismaService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, nestjs_pino_1.InjectPinoLogger)(PrismaService.name)),
-    __metadata("design:paramtypes", [nestjs_pino_1.PinoLogger])
+    __metadata("design:paramtypes", [])
 ], PrismaService);
 //# sourceMappingURL=prisma.service.js.map

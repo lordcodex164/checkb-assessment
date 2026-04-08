@@ -1,17 +1,29 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '../../../../node_modules/.prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
+import { Pool } from 'pg';
+import { normalizePostgresUrl } from './prisma-url';
 
 @Injectable()
-export class PrismaService extends PrismaClient {
-  constructor(
-    @InjectPinoLogger(PrismaService.name)
-    private readonly logger: PinoLogger,
-  ) {
-    const adapter = new PrismaPg({
-      connectionString: process.env.DATABASE_URL as string,
+export class PrismaService extends PrismaClient implements OnModuleDestroy {
+  private readonly pool: Pool;
+
+  constructor() {
+    const connectionString = process.env.DATABASE_URL?.trim();
+    if (!connectionString) {
+      throw new Error(
+        'DATABASE_URL is not set or is empty. Prisma cannot connect to PostgreSQL.',
+      );
+    }
+
+    const url = normalizePostgresUrl(connectionString);
+    const pool = new Pool({
+      connectionString: url,
+      max: 10,
     });
+
+    const adapter = new PrismaPg(pool);
+
     super({
       adapter,
       log: [
@@ -20,5 +32,11 @@ export class PrismaService extends PrismaClient {
         { emit: 'event', level: 'warn' },
       ],
     });
+
+    this.pool = pool;
+  }
+
+  async onModuleDestroy() {
+    await this.pool.end();
   }
 }

@@ -1,6 +1,7 @@
+import { OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '../../../../node_modules/.prisma/client';
-import { PinoLogger } from 'nestjs-pino';
-export declare class PrismaService extends PrismaClient {
-    private readonly logger;
-    constructor(logger: PinoLogger);
+export declare class PrismaService extends PrismaClient implements OnModuleDestroy {
+    private readonly pool;
+    constructor();
+    onModuleDestroy(): Promise<void>;
 }
