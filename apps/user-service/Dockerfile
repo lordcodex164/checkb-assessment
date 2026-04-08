@@ -36,15 +36,7 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 COPY --from=builder /app/packages/prisma ./packages/prisma
 
-ls -la
-ls -la packages/prisma
-ls -la packages/prisma/schema.prisma
-ls -la packages/prisma/migrations
-ls -la packages/prisma/migrations/20260408100000_init/
-ls -la packages/prisma/migrations/20260408100000_init/migration.sql
-ls -la packages/prisma/migrations/20260408100000_init/migration.sql.gz
-ls -la packages/prisma/migrations/20260408100000_init/migration.sql.gz.base64
-ls -la packages/prisma/migrations/20260408100000_init/migration.sql.gz.base64.txt
+ls
 
 EXPOSE 5001
 
