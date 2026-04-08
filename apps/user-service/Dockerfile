@@ -13,11 +13,6 @@ RUN npm ci --ignore-scripts
 COPY apps/user-service ./apps/user-service
 COPY packages/proto ./packages/proto
 
-# Generate Prisma Client (this must succeed)
-RUN npx prisma generate --schema=packages/prisma/schema.prisma
-
-COPY packages/prisma/schema.prisma ./packages/prisma/schema.prisma
-
 # Build the NestJS app
 RUN npm run build --prefix apps/user-service
 
