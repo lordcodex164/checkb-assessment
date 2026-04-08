@@ -10,4 +10,4 @@ logs
 
 /prisma/packages/prisma
 
-.env
+.env*
