@@ -6,6 +6,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/user-service/package.json ./apps/user-service/
 COPY packages/prisma ./packages/prisma
+COPY packages/prisma/prisma.config.ts ./packages/prisma/prisma.config.ts
 
 RUN npm ci --ignore-scripts
 
@@ -30,7 +31,7 @@ COPY --from=builder /app/apps/user-service/dist ./apps/user-service/dist
 COPY --from=builder /app/packages/proto ./packages/proto
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/packages/prisma ./packages/prisma
-
+COPY --from=builder /app/packages/prisma/prisma.config.ts ./packages/prisma/prisma.config.ts
 EXPOSE 5001
 
 # Apply SQL from packages/prisma/migrations, then start gRPC.
