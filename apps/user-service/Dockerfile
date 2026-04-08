@@ -31,6 +31,11 @@ ENV NODE_ENV=production
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/user-service/dist ./apps/user-service/dist
 COPY --from=builder /app/packages/proto ./packages/proto
+=== CRITICAL: Copy the generated Prisma Client ===
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Optional but recommended: Copy the schema (helps if Prisma ever needs it at runtime)
+COPY --from=builder /app/packages/prisma ./packages/prisma
 
 # Optional: Copy the Prisma schema if you ever need to run migrations from inside the container
 # COPY --from=builder /app/packages/prisma ./packages/prisma
