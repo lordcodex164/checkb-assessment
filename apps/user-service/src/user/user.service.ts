@@ -21,8 +21,8 @@ export class UserService {
       'Checking email uniqueness before insert',
     );
 
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: "test@test.com" },
+    const existingUser = await this.prisma.user.findUniqueOrThrow({
+      where: { email: dto.email },
     });
 
     if (existingUser) {
