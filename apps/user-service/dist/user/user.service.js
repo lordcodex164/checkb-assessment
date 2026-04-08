@@ -22,34 +22,38 @@ let UserService = class UserService {
         this.logger = logger;
     }
     async createUser(dto) {
-        if (!dto?.email || !dto?.name) {
-            this.logger.error({ dto }, 'Missing required fields');
-            throw new Error('Email and name are required');
-        }
         this.logger.info({
             op: 'createUser',
-            email: dto.email,
-        }, 'Checking email uniqueness before insert');
+            receivedDto: dto,
+            dtoType: typeof dto,
+            keys: Object.keys(dto || {}),
+            emailValue: dto?.email,
+            emailType: typeof dto?.email
+        }, 'Full DTO received from gRPC');
+        if (!dto?.email || typeof dto.email !== 'string') {
+            this.logger.error({ dto }, 'Email is missing or invalid');
+            throw new Error('Email is required and must be a string');
+        }
+        if (!dto?.name || typeof dto.name !== 'string') {
+            this.logger.error({ dto }, 'Name is missing or invalid');
+            throw new Error('Name is required');
+        }
+        this.logger.info({ op: 'createUser', email: dto.email }, 'Checking email uniqueness before insert');
         console.log("email is ", dto.email);
         const existingUser = await this.prisma.user.findUnique({
-            where: { email: dto.email },
+            where: { email: dto.email.trim() },
         });
         if (existingUser) {
-            this.logger.warn({ op: 'createUser', email: dto.email, existingUserId: existingUser.id }, 'Email already registered');
+            this.logger.warn({ op: 'createUser', email: dto.email }, 'Email already registered');
             throw new common_1.ConflictException(`User with email ${dto.email} already exists`);
         }
         const user = await this.prisma.user.create({
             data: {
-                email: dto.email,
-                name: dto.name,
+                email: dto.email.trim(),
+                name: dto.name.trim(),
             },
         });
-        this.logger.info({
-            op: 'createUser',
-            userId: user.id,
-            email: user.email,
-            createdAt: user.createdAt,
-        }, 'User persisted');
+        this.logger.info({ op: 'createUser', userId: user.id }, 'User created successfully');
         return this.formatUser(user);
     }
     async getUserById(id) {

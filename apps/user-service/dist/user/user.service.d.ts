@@ -1,11 +1,10 @@
 import { PinoLogger } from 'nestjs-pino';
-import { CreateUserDto } from './dto/createuser.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 export declare class UserService {
     private readonly prisma;
     private readonly logger;
     constructor(prisma: PrismaService, logger: PinoLogger);
-    createUser(dto: CreateUserDto): Promise<{
+    createUser(dto: any): Promise<{
         id: string;
         email: string;
         name: string;
