@@ -24,6 +24,7 @@ ENV NODE_ENV=production
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/wallet-service/dist ./apps/wallet-service/dist
 COPY --from=builder /app/packages/proto ./packages/proto
+COPY --from=builder /app/packages/prisma ./packages/prisma
 
 EXPOSE 5001
-CMD ["node", "apps/wallet-service/dist/main.js"]
+CMD [ "sh", "-c", "npx prisma migrate deploy --schema=packages/prisma/schema.prisma && node apps/wallet-service/dist/main.js"]
