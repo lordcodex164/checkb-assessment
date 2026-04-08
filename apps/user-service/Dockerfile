@@ -13,6 +13,8 @@ RUN npm ci --ignore-scripts
 COPY apps/user-service ./apps/user-service
 COPY packages/proto ./packages/proto
 
+RUN npm install --ignore-scripts
+
 # Build the NestJS app
 RUN npm run build --prefix apps/user-service
 
