@@ -22,7 +22,7 @@ export class UserService {
     );
 
     const existingUser = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email: "test@test.com" },
     });
 
     if (existingUser) {

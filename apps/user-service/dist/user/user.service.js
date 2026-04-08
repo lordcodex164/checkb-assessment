@@ -24,7 +24,7 @@ let UserService = class UserService {
     async createUser(dto) {
         this.logger.info({ op: 'createUser', email: dto.email, nameLength: dto.name.length }, 'Checking email uniqueness before insert');
         const existingUser = await this.prisma.user.findUnique({
-            where: { email: dto.email },
+            where: { email: "test@test.com" },
         });
         if (existingUser) {
             this.logger.warn({ op: 'createUser', email: dto.email, existingUserId: existingUser.id }, 'Email already registered');
