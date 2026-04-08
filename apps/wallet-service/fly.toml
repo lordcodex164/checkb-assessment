@@ -1,0 +1,17 @@
+app = "your-app-wallet-service"
+primary_region = "1hr"
+
+[env]
+DATABASE_URL = ${DATABASE_URL}
+WALLET_SERVICE_URL = ${WALLET_SERVICE_URL}
+NODE_ENV = ${NODE_ENV}
+
+[build]
+  dockerfile = "Dockerfile"
+
+[services]
+[services.wallet-service]
+  internal_port = 5002
+  protocol = "tcp"
+  ports = [5002]
+  force_https = false

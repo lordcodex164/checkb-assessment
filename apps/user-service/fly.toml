@@ -1,0 +1,17 @@
+app = "your-app-user-service"
+primary_region = "ams"
+
+[env]
+DATABASE_URL = ${DATABASE_URL}
+USER_SERVICE_URL = ${USER_SERVICE_URL}
+NODE_ENV = ${NODE_ENV}
+
+[build]
+  dockerfile = "Dockerfile"
+
+[services]
+[services.user-service]
+  internal_port = 5001
+  protocol = "tcp"
+  ports = [5001]
+  force_https = true
