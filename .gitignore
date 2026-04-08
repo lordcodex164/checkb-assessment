@@ -10,4 +10,15 @@ logs
 
 /prisma/packages/prisma
 
+#it removes the .env files from the root directory
+.env*
+
+#it removes the .env files from the apps directory
+apps/.env*
+
+
+#it removes the .env files from the packages directory
+packages/.env*
+
+#it removes the .env files from the root directory
 .env*
