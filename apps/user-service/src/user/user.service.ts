@@ -16,55 +16,59 @@ export class UserService {
   ) {}
 
 
-  async createUser(dto: any) {   // ← Change to `any` temporarily for debugging
+  async createUser(dto: any) {
 
-    // Log the FULL incoming object so we can see its real shape
+    // Super detailed logging
     this.logger.info({ 
       op: 'createUser', 
       receivedDto: dto,
-      dtoType: typeof dto,
       keys: Object.keys(dto || {}),
-      emailValue: dto?.email,
+      email: dto?.email,
+      name: dto?.name,
       emailType: typeof dto?.email
     }, 'Full DTO received from gRPC');
   
-    if (!dto?.email || typeof dto.email !== 'string') {
-      this.logger.error({ dto }, 'Email is missing or invalid');
-      throw new Error('Email is required and must be a string');
+    // Strong validation
+    if (!dto?.email || typeof dto.email !== 'string' || dto.email.trim() === '') {
+      this.logger.error({ received: dto }, 'Email is missing or invalid');
+      throw new Error('Email is required');
     }
   
-    if (!dto?.name || typeof dto.name !== 'string') {
-      this.logger.error({ dto }, 'Name is missing or invalid');
+    if (!dto?.name || typeof dto.name !== 'string' || dto.name.trim() === '') {
+      this.logger.error({ received: dto }, 'Name is missing or invalid');
       throw new Error('Name is required');
     }
   
-    this.logger.info(
-      { op: 'createUser', email: dto.email },
-      'Checking email uniqueness before insert'
-    );
+    const email = dto.email.trim();
+    const name = dto.name.trim();
   
-    console.log("email is ", dto.email);
+    this.logger.info({ op: 'createUser', email }, 'Checking email uniqueness before insert');
   
-    const existingUser = await this.prisma.user.findFirst({
-      where: { email: dto.email.trim() },   // trim just in case
+    console.log("email passed to Prisma:", email);
+  
+    // Use findUnique instead of findFirst (since email is @unique)
+    const existingUser = await this.prisma.user.findUnique({
+      where: { 
+        email: email 
+      },
     });
   
     if (existingUser) {
-      this.logger.warn({ op: 'createUser', email: dto.email }, 'Email already registered');
-      throw new ConflictException(`User with email ${dto.email} already exists`);
+      this.logger.warn({ op: 'createUser', email }, 'Email already registered');
+      throw new ConflictException(`User with email ${email} already exists`);
     }
   
     const user = await this.prisma.user.create({
       data: {
-        email: dto.email.trim(),
-        name: dto.name.trim(),
+        email: email,
+        name: name,
       },
     });
   
-    this.logger.info({ op: 'createUser', userId: user.id }, 'User created successfully');
+    this.logger.info({ op: 'createUser', userId: user.id, email: user.email }, 'User created successfully');
     return this.formatUser(user);
   }
-
+  
   async getUserById(id: string) {
     this.logger.debug({ op: 'getUserById', userId: id }, 'Prisma findUnique');
 
