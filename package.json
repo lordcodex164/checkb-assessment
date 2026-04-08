@@ -30,6 +30,9 @@
   ],
   "author": "",
   "license": "MIT",
+  "prisma": {
+    "schema": "packages/prisma/schema.prisma"
+  },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
     "@nestjs/common": "^10.4.22",
