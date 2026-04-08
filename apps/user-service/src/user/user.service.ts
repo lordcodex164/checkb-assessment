@@ -13,7 +13,7 @@ export class UserService {
     private readonly prisma: PrismaService,
     @InjectPinoLogger(UserService.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   async createUser(dto: CreateUserDto) {
     this.logger.info(

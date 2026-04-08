@@ -33,10 +33,6 @@ COPY --from=builder /app/packages/prisma ./packages/prisma
 
 EXPOSE 5001
 
-# App entry (nest build → apps/user-service/dist/main.js).
-# Prisma schema: root package.json "prisma.schema" + copied packages/prisma/.
-# Run DB migrations in Railway "Release" / CI, not here, unless you commit
-# packages/prisma/migrations — then you can use:
-#   npx prisma migrate deploy
-# (schema path is resolved via package.json when cwd is /app).
-CMD ["node", "apps/user-service/dist/main.js"]
+# Apply SQL from packages/prisma/migrations, then start gRPC.
+# Requires DATABASE_URL in the environment (Railway / Render Postgres).
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=packages/prisma/schema.prisma && node apps/user-service/dist/main.js"]
