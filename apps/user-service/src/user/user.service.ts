@@ -16,14 +16,21 @@ export class UserService {
   ) {}
 
   async createUser(dto: CreateUserDto) {
+    
+    if (!dto?.email || !dto?.name) {
+      this.logger.error({ dto }, 'Missing required fields');
+      throw new Error('Email and name are required');
+    }
     this.logger.info(
       {
         op: 'createUser',
         email: dto.email,
-        nameLength: dto.name.length,
+        //nameLength: dto.name.length,
       },
       'Checking email uniqueness before insert',
     );
+
+    console.log("email is ", dto.email);
 
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
