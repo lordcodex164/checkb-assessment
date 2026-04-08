@@ -16,14 +16,24 @@ export class UserService {
   ) {}
 
   async createUser(dto: CreateUserDto) {
-    this.logger.info({ email: dto.email }, 'Creating new user');
+    this.logger.info(
+      {
+        op: 'createUser',
+        email: dto.email,
+        nameLength: dto.name.length,
+      },
+      'Checking email uniqueness before insert',
+    );
 
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
 
     if (existingUser) {
-      this.logger.warn({ email: dto.email }, 'User with email already exists');
+      this.logger.warn(
+        { op: 'createUser', email: dto.email, existingUserId: existingUser.id },
+        'Email already registered',
+      );
       throw new ConflictException(
         `User with email ${dto.email} already exists`,
       );
@@ -36,14 +46,23 @@ export class UserService {
       },
     });
 
-    this.logger.info({ userId: user.id }, 'User created successfully');
+    this.logger.info(
+      {
+        op: 'createUser',
+        userId: user.id,
+        email: user.email,
+        createdAt: user.createdAt,
+      },
+      'User persisted',
+    );
     return this.formatUser(user);
   }
 
   async getUserById(id: string) {
-    this.logger.info({ userId: id }, 'Fetching user by ID');
+    this.logger.debug({ op: 'getUserById', userId: id }, 'Prisma findUnique');
 
     if (!id || id.trim() === '') {
+      this.logger.warn({ op: 'getUserById' }, 'Rejected empty user id');
       throw new NotFoundException('User ID is required');
     }
 
@@ -52,20 +71,32 @@ export class UserService {
     });
 
     if (!user) {
-      this.logger.warn({ userId: id }, 'User not found');
+      this.logger.warn({ op: 'getUserById', userId: id }, 'No row for id');
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    this.logger.info({ userId: id }, 'User fetched successfully');
+    this.logger.info(
+      {
+        op: 'getUserById',
+        userId: user.id,
+        email: user.email,
+      },
+      'User loaded',
+    );
     return this.formatUser(user);
   }
 
-  //todo: use a type for the user object
-  private formatUser(user: any) {
+  private formatUser(user: {
+    id: string;
+    email: string;
+    name: string;
+    createdAt: Date;
+  }) {
     return {
       id: user.id,
       email: user.email,
       name: user.name,
+      createdAt: user.createdAt.toISOString(),
     };
   }
 }

@@ -8,15 +8,18 @@ export declare class UserController {
         email: string;
         name: string;
     }): Promise<{
-        id: any;
-        email: any;
-        name: any;
+        id: string;
+        email: string;
+        name: string;
+        createdAt: string;
     }>;
     getUserById(data: {
         id: string;
     }): Promise<{
-        id: any;
-        email: any;
-        name: any;
+        id: string;
+        email: string;
+        name: string;
+        createdAt: string;
     }>;
+    private logRpcFailure;
 }

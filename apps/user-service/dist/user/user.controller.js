@@ -28,58 +28,105 @@ let UserController = class UserController {
         this.logger = logger;
     }
     async createUser(data) {
-        this.logger.info({ data }, 'gRPC CreateUser called');
+        const rpc = 'UserService.CreateUser';
+        this.logger.info({ rpc, email: data?.email, nameLength: data?.name?.length ?? 0 }, 'gRPC request received');
         const dto = (0, class_transformer_1.plainToInstance)(createuser_dto_1.CreateUserDto, data);
         const errors = await (0, class_validator_1.validate)(dto);
         if (errors.length > 0) {
             const messages = errors.flatMap((e) => Object.values(e.constraints || {}));
-            this.logger.warn({ errors: messages }, 'Validation failed for CreateUser');
+            const fields = errors.map((e) => e.property);
+            this.logger.warn({ rpc, fields, errors: messages }, 'Validation failed for CreateUser');
             throw new microservices_2.RpcException({
                 code: grpc_js_1.status.INVALID_ARGUMENT,
                 message: messages.join('; '),
             });
         }
         try {
-            return await this.userService.createUser(dto);
+            const result = await this.userService.createUser(dto);
+            this.logger.info({ rpc, userId: result.id, email: result.email }, 'CreateUser completed');
+            return result;
         }
         catch (error) {
-            this.logger.error({ error: error.message }, 'Error in CreateUser');
-            if (error.status === 409) {
+            this.logRpcFailure(rpc, error);
+            if (error instanceof common_1.ConflictException) {
                 throw new microservices_2.RpcException({
                     code: grpc_js_1.status.ALREADY_EXISTS,
                     message: error.message,
                 });
             }
+            const err = error;
             throw new microservices_2.RpcException({
                 code: grpc_js_1.status.INTERNAL,
-                message: error.message || 'Internal server error',
+                message: err.message || 'Internal server error',
             });
         }
     }
     async getUserById(data) {
-        this.logger.info({ userId: data.id }, 'gRPC GetUserById called');
+        const rpc = 'UserService.GetUserById';
+        this.logger.info({ rpc, userId: data?.id }, 'gRPC request received');
         if (!data.id || data.id.trim() === '') {
+            this.logger.warn({ rpc }, 'Missing or empty user id');
             throw new microservices_2.RpcException({
                 code: grpc_js_1.status.INVALID_ARGUMENT,
                 message: 'User ID is required',
             });
         }
         try {
-            return await this.userService.getUserById(data.id);
+            const result = await this.userService.getUserById(data.id);
+            this.logger.info({ rpc, userId: result.id }, 'GetUserById completed');
+            return result;
         }
         catch (error) {
-            this.logger.error({ error: error.message }, 'Error in GetUserById');
-            if (error.status === 404) {
+            this.logRpcFailure(rpc, error);
+            if (error instanceof common_1.NotFoundException) {
                 throw new microservices_2.RpcException({
                     code: grpc_js_1.status.NOT_FOUND,
                     message: error.message,
                 });
             }
+            const err = error;
             throw new microservices_2.RpcException({
                 code: grpc_js_1.status.INTERNAL,
-                message: error.message || 'Internal server error',
+                message: err.message || 'Internal server error',
             });
         }
+    }
+    logRpcFailure(rpc, error) {
+        if (error instanceof common_1.NotFoundException) {
+            this.logger.warn({
+                rpc,
+                errMessage: error.message,
+                httpStatus: error.getStatus(),
+            }, 'gRPC handler: not found');
+            return;
+        }
+        if (error instanceof common_1.ConflictException) {
+            this.logger.warn({
+                rpc,
+                errMessage: error.message,
+                httpStatus: error.getStatus(),
+            }, 'gRPC handler: conflict');
+            return;
+        }
+        if (error instanceof microservices_2.RpcException) {
+            this.logger.error({
+                rpc,
+                errMessage: error.message,
+                rpcError: error.getError(),
+                errStack: error.stack,
+            }, 'gRPC handler failed (RpcException)');
+            return;
+        }
+        if (error instanceof Error) {
+            this.logger.error({
+                rpc,
+                errMessage: error.message,
+                errName: error.name,
+                errStack: error.stack,
+            }, 'gRPC handler failed');
+            return;
+        }
+        this.logger.error({ rpc, error: String(error) }, 'gRPC handler failed');
     }
 };
 exports.UserController = UserController;

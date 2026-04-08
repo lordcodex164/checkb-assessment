@@ -6,14 +6,16 @@ export declare class UserService {
     private readonly logger;
     constructor(prisma: PrismaService, logger: PinoLogger);
     createUser(dto: CreateUserDto): Promise<{
-        id: any;
-        email: any;
-        name: any;
+        id: string;
+        email: string;
+        name: string;
+        createdAt: string;
     }>;
     getUserById(id: string): Promise<{
-        id: any;
-        email: any;
-        name: any;
+        id: string;
+        email: string;
+        name: string;
+        createdAt: string;
     }>;
     private formatUser;
 }
