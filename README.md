@@ -128,7 +128,7 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5433/wallet_service_db?sc
   npx prisma migrate dev --schema=../../packages/prisma/schema.prisma --name init
 ```
 
-Generate the Prisma client:
+From the root Generate the Prisma client:
 
 ```bash
 npx prisma generate --schema=packages/prisma/schema.prisma
