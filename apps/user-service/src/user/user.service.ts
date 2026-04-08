@@ -15,7 +15,7 @@ export class UserService {
     private readonly logger: PinoLogger,
   ) {}
 
-  
+
   async createUser(dto: any) {   // ← Change to `any` temporarily for debugging
 
     // Log the FULL incoming object so we can see its real shape
@@ -45,7 +45,7 @@ export class UserService {
   
     console.log("email is ", dto.email);
   
-    const existingUser = await this.prisma.user.findUnique({
+    const existingUser = await this.prisma.user.findFirst({
       where: { email: dto.email.trim() },   // trim just in case
     });
   
