@@ -43,4 +43,4 @@ COPY --from=builder /app/packages/prisma ./packages/prisma
 EXPOSE 5001
 
 # Run prisma generate again as safety net + start the app
-CMD ["node apps/user-service/dist/main.js"]
+CMD ["node", "apps/user-service/dist/main.js"]
