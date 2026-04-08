@@ -82,24 +82,8 @@ The **API Gateway** is not defined in `docker-compose.yml` in this repo. To exer
 ```bash
 # Root
 npm install
-
-# User Service
-cd apps/user-service && npm install
-
-# Wallet Service
-cd apps/wallet-service && npm install
-
-# API Gateway (HTTP)
-cd apps/api-gateway && npm install
 ```
 
-#### 2. Create the databases
-
-```sql
--- In psql or any PostgreSQL client:
-CREATE DATABASE user_service_db;
-CREATE DATABASE wallet_service_db;
-```
 
 #### 3. Configure environment variables
 
