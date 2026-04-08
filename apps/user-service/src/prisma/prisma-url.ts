@@ -19,7 +19,7 @@ export function normalizePostgresUrl(raw: string): string {
     if (!isLocal && !u.searchParams.has('sslmode')) {
       u.searchParams.set('sslmode', 'require');
     }
-    return u.toString();
+    return u.toString(); 
   } catch {
     return trimmed;
   }
