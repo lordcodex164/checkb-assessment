@@ -6,6 +6,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/user-service/package.json ./apps/user-service/
 COPY packages/prisma ./packages/prisma
+COPY packages/prisma/prisma.config.ts ./packages/prisma/prisma.config.ts
 
 RUN npm ci --ignore-scripts
 
@@ -40,4 +41,4 @@ COPY --from=builder /app/packages/prisma ./packages/prisma
 
 EXPOSE 5001
 
-CMD ["sh", "-c", "npx prisma migrate deploy --schema=packages/prisma/schema.prisma && node apps/user-service/dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy --config packages/prisma/prisma.config.ts && node apps/user-service/dist/main.js"]
