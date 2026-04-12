@@ -6,11 +6,10 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/user-service/package.json ./apps/user-service/
 COPY packages/prisma ./packages/prisma
-COPY ..
 
 RUN npm ci --ignore-scripts
 
-RUN npx prisma generate --schema=packages/prisma/schema.prisma
+RUN npx prisma generate --config packages/prisma/prisma.config.ts
 
 # Copy source code
 COPY apps/user-service ./apps/user-service
