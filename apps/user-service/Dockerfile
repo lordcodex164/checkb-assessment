@@ -6,6 +6,8 @@ WORKDIR /app
 # Copy root files first (for workspaces)
 COPY package.json package-lock.json ./
 COPY packages/prisma ./packages/prisma
+COPY packages/proto ./packages/proto
+
 
 # Copy app-specific package.json
 COPY apps/user-service/package.json ./apps/user-service/
@@ -18,7 +20,6 @@ RUN npx prisma generate --schema=packages/prisma/schema.prisma
 
 # Now copy source code
 COPY apps/user-service ./apps/user-service
-COPY packages/proto ./packages/proto   # if you have this
 
 # Build
 RUN npm run build --prefix apps/user-service
