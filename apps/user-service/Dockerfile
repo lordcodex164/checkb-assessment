@@ -37,4 +37,4 @@ COPY --from=builder /app/packages/prisma ./packages/prisma
 
 EXPOSE 5001
 
-CMD ["ls", "-l", "node", "apps/user-service/dist/main.js"]
+CMD ["ls", "-l", "npx prisma migrate deploy --schema=packages/prisma/schema.prisma", "node", "apps/user-service/dist/main.js"]
