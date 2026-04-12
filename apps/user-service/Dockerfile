@@ -9,6 +9,8 @@ COPY packages/prisma ./packages/prisma
 
 RUN npm ci --ignore-scripts
 
+RUN npx prisma generate --schema=packages/prisma/schema.prisma
+
 # Copy source code
 COPY apps/user-service ./apps/user-service
 COPY packages/proto ./packages/proto
