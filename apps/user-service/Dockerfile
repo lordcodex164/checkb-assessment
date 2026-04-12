@@ -38,7 +38,6 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 COPY --from=builder /app/packages/prisma ./packages/prisma
 
-COPY --from=builder /app/.. ./..
 
 EXPOSE 5001
 
