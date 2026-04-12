@@ -5,7 +5,7 @@ WORKDIR /app
 # Copy dependency files
 COPY package.json package-lock.json ./
 COPY apps/user-service/package.json ./apps/user-service/
-COPY packages/prisma ./packages/prisma
+COPY ../../packages/prisma ./packages/prisma
 COPY . .
 
 RUN npm ci --ignore-scripts
