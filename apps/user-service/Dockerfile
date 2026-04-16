@@ -37,12 +37,10 @@ COPY --from=builder /app/apps/user-service/dist ./apps/user-service/dist
 
 COPY --from=builder /app/packages/proto ./packages/proto
 
-COPY --from=builder /app/packages/prisma/prisma.config.ts ./packages/prisma/
-
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 COPY --from=builder /app/packages/prisma ./packages/prisma
 
 EXPOSE 5001 
  
-CMD ["sh", "-c", "npx prisma migrate deploy --schema=packages/prisma/schema.prisma && node apps/user-service/dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node apps/user-service/dist/main.js"]
