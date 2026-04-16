@@ -7,6 +7,7 @@ COPY package.json package-lock.json ./
 COPY apps/user-service/package.json ./apps/user-service/
 COPY packages ./packages
 COPY packages/prisma ./packages/prisma
+COPY packages/prisma/prisma.config.ts ./packages/prisma/prisma.config.ts
 COPY . .
 
 RUN npm ci --ignore-scripts
