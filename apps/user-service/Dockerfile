@@ -18,9 +18,11 @@ COPY apps/user-service ./apps/user-service
 #COPY packages/proto ./packages/proto
 
 RUN npm install --ignore-scripts
+RUN npm install prisma@latest @prisma/client@latest
 
 # Build the NestJS app
 RUN npm run build --prefix apps/user-service
+
 
 # ====================== Production Stage ======================
 FROM node:22-alpine AS production
