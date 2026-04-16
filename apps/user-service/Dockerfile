@@ -11,14 +11,14 @@ COPY . .
 
 RUN npm ci --ignore-scripts
 
-RUN npx prisma generate --schema=packages/prisma/schema.prisma
-
 # Copy source code
 COPY apps/user-service ./apps/user-service
 #COPY packages/proto ./packages/proto
 
 RUN npm install --ignore-scripts
 RUN npm install prisma@latest @prisma/client@latest
+
+RUN npx prisma generate --schema=packages/prisma/schema.prisma
 
 # Build the NestJS app
 RUN npm run build --prefix apps/user-service
