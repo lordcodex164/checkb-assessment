@@ -6,10 +6,6 @@ node_modules/
 # Logs
 logs
 
-/packages/prisma
-
-/prisma/packages/prisma
-
 #it removes the .env files from the root directory
 .env*
 
