@@ -8,7 +8,6 @@
     "allowSyntheticDefaultImports": true,
     "target": "ES2021",
     "sourceMap": true,
-    "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
@@ -17,5 +16,11 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@user-service/*": ["apps/user-service/*"],
+      "@wallet-service": ["apps/wallet-service/*"],
+      "@packages/*": ["packages/*", "packages/*.proto"],
+      "@node_modules/*": ["node_modules/*"],
+    },
   },
 }

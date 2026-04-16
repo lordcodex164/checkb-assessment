@@ -1,7 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { Transport } from '@nestjs/microservices';
-  import { resolve } from 'path';
+import { resolve } from 'path';
 import { AppModule } from './app.module';
+import packages from "@p";
 
 const PROTO_PATH = resolve(__dirname, '../../../packages/proto/wallet.proto');
 

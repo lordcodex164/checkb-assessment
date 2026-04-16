@@ -3,7 +3,6 @@ import { Transport } from '@nestjs/microservices';
 import { join } from 'path';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
-
 const PROTO_PATH = join(__dirname, '../../../packages/proto/user.proto');
 
 async function bootstrap() {

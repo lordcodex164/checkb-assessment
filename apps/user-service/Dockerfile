@@ -1,27 +1,25 @@
-# ====================== Builder Stage ======================
 FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Copy root files first (for workspaces)
+# Copy dependency files
 COPY package.json package-lock.json ./
-COPY packages/prisma ./packages/prisma
-COPY packages/proto ./packages/proto
-
-
-# Copy app-specific package.json
 COPY apps/user-service/package.json ./apps/user-service/
+COPY packages ./packages
+COPY packages/prisma ./packages/prisma
+COPY . .
 
-# Install dependencies (ci is better for reproducibility)
 RUN npm ci --ignore-scripts
 
-# Generate Prisma client (do this early if possible)
 RUN npx prisma generate --schema=packages/prisma/schema.prisma
 
-# Now copy source code
+# Copy source code
 COPY apps/user-service ./apps/user-service
+#COPY packages/proto ./packages/proto
 
-# Build
+RUN npm install --ignore-scripts
+
+# Build the NestJS app
 RUN npm run build --prefix apps/user-service
 
 # ====================== Production Stage ======================
@@ -30,20 +28,17 @@ FROM node:22-alpine AS production
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Copy only what's needed
+# Copy production node_modules
 COPY --from=builder /app/node_modules ./node_modules
+
 COPY --from=builder /app/apps/user-service/dist ./apps/user-service/dist
+
 COPY --from=builder /app/packages/proto ./packages/proto
-COPY --from=builder /app/packages/prisma ./packages/prisma
 
-# Explicitly ensure config + schema are there (safety)
-COPY --from=builder /app/packages/prisma/prisma.config.ts ./packages/prisma/prisma.config.ts
-COPY --from=builder /app/packages/prisma/schema.prisma ./packages/prisma/schema.prisma
-
-# Copy .prisma client if needed (you already have this)
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-EXPOSE 5001
+COPY --from=builder /app/packages/prisma ./packages/prisma
 
-# Recommended CMD (no --config flag)
+EXPOSE 5001
+ 
 CMD ["sh", "-c", "npx prisma migrate deploy --schema=packages/prisma/schema.prisma && node apps/user-service/dist/main.js"]

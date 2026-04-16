@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient } from '../../../../node_modules/.prisma/client';
+import { PrismaClient } from "@node_modules/.prisma/client";
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import { normalizePostgresUrl } from './prisma-url';

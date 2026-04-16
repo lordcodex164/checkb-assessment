@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { CreateUserDto } from './dto/createuser.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '@user-service/src/prisma/prisma.service';
 
 @Injectable()
 export class UserService {
